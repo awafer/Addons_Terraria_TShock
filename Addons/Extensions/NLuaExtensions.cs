@@ -35,7 +35,7 @@ namespace Addons.Extensions
             if (!isTable)
                 return;
 
-            // Push the name, func, and set the table..
+            // Push the name, function, and set the table..
             NLua.LuaLib.LuaPushString(state.GetState(), name);
             NLua.LuaLib.LuaPushStdCallCFunction(state.GetState(), func);
             NLua.LuaLib.LuaRawSet(state.GetState(), -3);

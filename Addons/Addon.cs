@@ -240,19 +240,19 @@ namespace Addons
                 // Validate the addon author..
                 var addonAuthor = this.LuaState["_addon.author"];
                 if (addonAuthor.GetType() != typeof(string))
-                    throw new Exception("_addon.author has invalid data type. Execpted string.");
+                    throw new Exception("_addon.author has invalid data type. Expected string.");
                 this.Author = (string)addonAuthor;
 
                 // Validate the addon name..
                 var addonName = this.LuaState["_addon.name"];
                 if (addonName.GetType() != typeof(string))
-                    throw new Exception("_addon.name has invalid data type. Execpted string.");
+                    throw new Exception("_addon.name has invalid data type. Expected string.");
                 this.Name = (string)addonName;
 
                 // Validate the addon version..
                 var addonVersion = this.LuaState["_addon.version"];
                 if (addonVersion.GetType() != typeof(string))
-                    throw new Exception("_addon.version has invalid data type. Execpted string.");
+                    throw new Exception("_addon.version has invalid data type. Expected string.");
                 this.Version = (string)addonVersion;
 
                 this.State = AddonState.Ok;

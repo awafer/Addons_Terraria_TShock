@@ -20,7 +20,7 @@ namespace Addons
     public enum AddonState
     {
         /// <summary>
-        /// Addon is in an errorous state and will not execute any further events.
+        /// Addon is in an erroneous state and will not execute any further events.
         /// </summary>
         Error,
 
