@@ -63,7 +63,8 @@
       <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;LUA_BUILD_AS_DLL;liblua_EXPORTS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <StringPooling>true</StringPooling>
-      <AdditionalIncludeDirectories>$(SolutionDir)\Lua\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\Lua\include;$(SolutionDir)\Lua\MySQL\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <StructMemberAlignment>2Bytes</StructMemberAlignment>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;LUA_BUILD_AS_DLL;CMAKE_INTDIR=\"Debug\";liblua_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -82,12 +83,17 @@
       </Version>
       <AdditionalOptions> /machine:X86 /debug %(AdditionalOptions)</AdditionalOptions>
       <SubSystem>Console</SubSystem>
+      <AdditionalLibraryDirectories>$(SolutionDir)\Lua\MySQL\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>libmysql.lib;mysqlclient.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <ProjectReference />
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(SolutionDir)\Lua\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\Lua\include;$(SolutionDir)\Lua\MySQL\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <CompileAs>CompileAsCpp</CompileAs>
       <ExceptionHandling>Sync</ExceptionHandling>
       <Optimization>Full</Optimization>
@@ -119,6 +125,8 @@
       <SubSystem>Console</SubSystem>
       <Version>
       </Version>
+      <AdditionalLibraryDirectories>$(SolutionDir)\Lua\MySQL\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>libmysql.lib;mysqlclient.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <ProjectReference />
     <ProjectReference>
@@ -126,6 +134,8 @@
     </ProjectReference>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\include\luasql\ls_mysql.h" />
+    <ClCompile Include="..\include\luasql\luasql.c" />
     <ClCompile Include="..\src\lapi.cpp" />
     <ClCompile Include="..\src\lauxlib.cpp" />
     <ClCompile Include="..\src\lbaselib.cpp" />
@@ -163,6 +173,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\lstruct\struct.h" />
+    <ClInclude Include="..\include\luasql\luasql.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

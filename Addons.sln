@@ -57,8 +57,8 @@ Global
 		{F55CABBB-4108-4A39-94E1-581FD46DC021}.Release|Win32.Build.0 = Release|x86
 		{F55CABBB-4108-4A39-94E1-581FD46DC021}.Release|x86.ActiveCfg = Release|x86
 		{F55CABBB-4108-4A39-94E1-581FD46DC021}.Release|x86.Build.0 = Release|x86
-		{BE8916E3-AC3B-48A2-9400-F10EA32B9253}.Debug|Mixed Platforms.ActiveCfg = Release|Win32
-		{BE8916E3-AC3B-48A2-9400-F10EA32B9253}.Debug|Mixed Platforms.Build.0 = Release|Win32
+		{BE8916E3-AC3B-48A2-9400-F10EA32B9253}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
+		{BE8916E3-AC3B-48A2-9400-F10EA32B9253}.Debug|Mixed Platforms.Build.0 = Debug|Win32
 		{BE8916E3-AC3B-48A2-9400-F10EA32B9253}.Debug|Win32.ActiveCfg = Debug|Win32
 		{BE8916E3-AC3B-48A2-9400-F10EA32B9253}.Debug|Win32.Build.0 = Debug|Win32
 		{BE8916E3-AC3B-48A2-9400-F10EA32B9253}.Debug|x86.ActiveCfg = Debug|Win32

@@ -23,6 +23,8 @@
 
 #include "lstruct\struct.h"
 
+#include "luasql\ls_mysql.h"
+
 #include <Windows.h>
 
 
@@ -43,6 +45,7 @@ static const luaL_Reg loadedlibs[] = {
     { LUA_DBLIBNAME, luaopen_debug },
 
     { "struct", luaopen_struct },
+
     { NULL, NULL }
 };
 
@@ -68,5 +71,7 @@ LUALIB_API void luaL_openlibs(lua_State *L) {
         lua_setfield(L, -2, lib->name);
     }
     lua_pop(L, 1);  /* remove _PRELOAD table */
+
+    luaopen_luasql_mysql(L);
 }
 

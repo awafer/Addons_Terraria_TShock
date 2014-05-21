@@ -100,6 +100,9 @@
     <ClCompile Include="..\src\lzio.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\include\luasql\luasql.c">
+      <Filter>luasql</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\src\lua_dll.rc">
@@ -110,8 +113,17 @@
     <Filter Include="Source Files">
       <UniqueIdentifier>{EC1B4743-BE19-4591-B30C-C57C7A8C8EF0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="luasql">
+      <UniqueIdentifier>{f0fd6129-c50b-4bb0-ba29-de8cb14b68b6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\lstruct\struct.h" />
+    <ClInclude Include="..\include\luasql\luasql.h">
+      <Filter>luasql</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\luasql\ls_mysql.h">
+      <Filter>luasql</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
