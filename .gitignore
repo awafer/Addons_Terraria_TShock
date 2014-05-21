@@ -126,3 +126,4 @@ Logs/
 *.log
 *.tlog
 
+/Lua/win32/Debug
