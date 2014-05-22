@@ -180,6 +180,7 @@ namespace Addons
                     this.LuaState.NewTable("TShock");
                     this.LuaState["TShock.CharacterDB"] = TShock.CharacterDB;
                     this.LuaState["TShock.Config"] = TShock.Config;
+                    this.LuaState["TShock.DB"] = TShock.DB;
                     this.LuaState["TShock.Geo"] = TShock.Geo;
                     this.LuaState["TShock.Groups"] = TShock.Groups;
                     this.LuaState["TShock.Itembans"] = TShock.Itembans;
