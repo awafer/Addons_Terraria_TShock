@@ -24,6 +24,7 @@
 #include "lstruct\struct.h"
 
 #include "luasql\ls_mysql.h"
+#include "luasql\ls_sqlite3.h"
 
 #include <Windows.h>
 
@@ -72,6 +73,9 @@ LUALIB_API void luaL_openlibs(lua_State *L) {
     }
     lua_pop(L, 1);  /* remove _PRELOAD table */
 
-    luaopen_luasql_mysql(L);
+    // Create luasql table..
+    luaopen_luasql_mysql(L); // Call this one first! It creates the main tabble..
+    luaopen_luasql_sqlite3(L); // Injects into the luasql table..
+    lua_pop(L, 1); // Pop the luasql table..
 }
 

@@ -125,5 +125,8 @@
     <ClInclude Include="..\include\luasql\ls_mysql.h">
       <Filter>luasql</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\luasql\ls_sqlite3.h">
+      <Filter>luasql</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
