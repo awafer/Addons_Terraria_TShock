@@ -974,7 +974,10 @@ namespace Addons
                 this.m_AddonCommands[addonName].Add(command);
 
                 // Register the command..
-                Commands.ChatCommands.Add(new Command(permission, HandleAddonCallbackCommand, command));
+                if (permission.Length > 0)
+                    Commands.ChatCommands.Add(new Command(permission, HandleAddonCallbackCommand, command));
+                else
+                    Commands.ChatCommands.Add(new Command(HandleAddonCallbackCommand, command));
             }
 
             return true;
@@ -987,7 +990,7 @@ namespace Addons
         public void RemoveAddonCommands(string addonName)
         {
             // Ensure we have any entries for the given addon..
-            if (this.m_AddonCommands[addonName.ToLower()] == null)
+            if (!this.m_AddonCommands.Keys.Contains(addonName.ToLower()))
                 return;
 
             // Remove each command from the addon..

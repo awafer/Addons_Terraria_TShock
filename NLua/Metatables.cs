@@ -247,6 +247,9 @@ namespace NLua
 				} else if (objType.UnderlyingSystemType == typeof(double[])) {
 					double[] arr = ((double[])obj);
 					translator.Push (luaState, arr [intIndex]);
+				} else if (objType.UnderlyingSystemType == typeof(bool[])) {
+                    bool[] arr = ((bool[])obj);
+                    translator.Push (luaState, arr [intIndex]);
 				} else if (objType.UnderlyingSystemType == typeof(int[])) {
 					int[] arr = ((int[])obj);
 					translator.Push (luaState, arr [intIndex]);
@@ -633,8 +636,14 @@ namespace NLua
 					member = members [0];
 					SetMemberCache (memberCache, targetType, fieldName, member);
 				} else {
-					detailMessage = "field or property '" + fieldName + "' does not exist";
-					return false;
+                    members = targetType.GetMember (fieldName, bindingType | BindingFlags.Static | BindingFlags.Public | BindingFlags.IgnoreCase/*| BindingFlags.NonPublic*/);
+				    if (members.Length > 0) {
+					    member = members [0];
+					    SetMemberCache (memberCache, targetType, fieldName, member);
+                    } else {
+					    detailMessage = "field or property '" + fieldName + "' does not exist";
+					    return false;
+                    }
 				}
 			}
 
