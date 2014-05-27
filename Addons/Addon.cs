@@ -17,6 +17,8 @@
 
 namespace Addons
 {
+    using System.Runtime.ExceptionServices;
+    using System.Security;
     using KeraLua;
     using System;
     using System.IO;
@@ -32,6 +34,8 @@ namespace Addons
         /// </summary>
         /// <param name="state"></param>
         /// <returns></returns>
+        [HandleProcessCorruptedStateExceptions]
+        [SecurityCritical]
         [System.Runtime.InteropServices.AllowReversePInvokeCalls]
         private int lua_AddonNewIndex(LuaState state)
         {
@@ -66,6 +70,8 @@ namespace Addons
         /// </summary>
         /// <param name="state"></param>
         /// <returns></returns>
+        [HandleProcessCorruptedStateExceptions]
+        [SecurityCritical]
         [System.Runtime.InteropServices.AllowReversePInvokeCalls]
         private int lua_AddonNewEvent(LuaState state)
         {
@@ -112,6 +118,8 @@ namespace Addons
         /// </summary>
         /// <param name="state"></param>
         /// <returns></returns>
+        [HandleProcessCorruptedStateExceptions]
+        [SecurityCritical]
         [System.Runtime.InteropServices.AllowReversePInvokeCalls]
         private int lua_AddonNewCommand(LuaState state)
         {
@@ -173,6 +181,8 @@ namespace Addons
         /// </summary>
         /// <param name="args"></param>
         /// <returns></returns>
+        [HandleProcessCorruptedStateExceptions]
+        [SecurityCritical]
         [System.Runtime.InteropServices.AllowReversePInvokeCalls]
         private int lua_Print(params object[] args)
         {
@@ -191,6 +201,8 @@ namespace Addons
         /// </summary>
         /// <param name="o"></param>
         /// <returns></returns>
+        [HandleProcessCorruptedStateExceptions]
+        [SecurityCritical]
         [System.Runtime.InteropServices.AllowReversePInvokeCalls]
         private ObjectInformation lua_ObjectDump(object o)
         {
@@ -203,6 +215,8 @@ namespace Addons
         /// <param name="name"></param>
         /// <param name="game"></param>
         /// <returns></returns>
+        [HandleProcessCorruptedStateExceptions]
+        [SecurityCritical]
         public bool Initialize(string name, Addons addons, Main game)
         {
             // Cleanup previous state..
@@ -345,31 +359,49 @@ namespace Addons
         /// <summary>
         /// Cleans up this addon instance.
         /// </summary>
+        [HandleProcessCorruptedStateExceptions]
+        [SecurityCritical]
         public void Release()
         {
-            // Cleanup the Lua state..
-            if (this.LuaState != null)
-                this.LuaState.Dispose();
-            this.LuaState = null;
+            try
+            {
+                // Cleanup the Lua state..
+                if (this.LuaState != null)
+                    this.LuaState.Dispose();
+                this.LuaState = null;
 
-            // Set this addon to release state..
-            this.State = AddonState.Released;
+                // Set this addon to release state..
+                this.State = AddonState.Released;
 
-            // Clear the addon variables..
-            this.Name = string.Empty;
-            this.Author = string.Empty;
-            this.Version = string.Empty;
+                // Clear the addon variables..
+                this.Name = string.Empty;
+                this.Author = string.Empty;
+                this.Version = string.Empty;
+            }
+            catch
+            {
+                this.State = AddonState.Error;
+            }
         }
 
         /// <summary>
         /// Reloads this addon.
         /// </summary>
         /// <returns></returns>
+        [HandleProcessCorruptedStateExceptions]
+        [SecurityCritical]
         public bool Reload()
         {
-            this.State = AddonState.Reloading;
-            this.Release();
-            return this.Initialize(this.FileName, this.Addons, this.Game);
+            try
+            {
+                this.State = AddonState.Reloading;
+                this.Release();
+                return this.Initialize(this.FileName, this.Addons, this.Game);
+            }
+            catch
+            {
+                this.State = AddonState.Error;
+            }
         }
 
         /// <summary>
@@ -378,6 +410,8 @@ namespace Addons
         /// <param name="name"></param>
         /// <param name="args"></param>
         /// <returns></returns>
+        [HandleProcessCorruptedStateExceptions]
+        [SecurityCritical]
         public object[] InvokeEvent(string name, params object[] args)
         {
             // Ensure the addon state is valid..
@@ -413,6 +447,8 @@ namespace Addons
         /// </summary>
         /// <param name="name"></param>
         /// <param name="args"></param>
+        [HandleProcessCorruptedStateExceptions]
+        [SecurityCritical]
         public void InvokeCommand(string name, CommandArgs args)
         {
             // Ensure the addon state is valid..
