@@ -19,6 +19,7 @@ namespace Addons
 {
     using System;
     using System.Collections.Concurrent;
+    using System.Collections.Generic;
     using System.ComponentModel;
     using System.Linq;
     using System.Reflection;
@@ -33,6 +34,11 @@ namespace Addons
         /// Dictionary of currently loaded addons.
         /// </summary>
         private readonly ConcurrentDictionary<string, Addon> m_Addons = new ConcurrentDictionary<string, Addon>();
+
+        /// <summary>
+        /// Dictionary of current registered addon commands.
+        /// </summary>
+        private readonly ConcurrentDictionary<string, List<string>> m_AddonCommands = new ConcurrentDictionary<string, List<string>>();
 
         /// <summary>
         /// Lock object to help prevent threading races for the Lua addons.
@@ -70,7 +76,9 @@ namespace Addons
                         a.Value.InvokeEvent("unload");
                         a.Value.Release();
                     }
+
                     this.m_Addons.Clear();
+                    this.m_AddonCommands.Clear();
                 }
             }
             base.Dispose(disposing);
@@ -81,7 +89,7 @@ namespace Addons
         /// </summary>
         public override void Initialize()
         {
-            // Register chat command..
+            // Register addon chat command..
             Commands.ChatCommands.Add(new Command("addons.manageaddons", HandleAddonCommand, "addon"));
 
             /**
@@ -830,7 +838,7 @@ namespace Addons
                         }
 
                         addon = new Addon();
-                        if (!addon.Initialize(addonName, m_GameObject))
+                        if (!addon.Initialize(addonName, this, m_GameObject))
                             return;
 
                         addon.InvokeEvent("load");
@@ -861,6 +869,10 @@ namespace Addons
                         addon.Release();
 
                         e.Player.SendSuccessMessage("[Addons] Unloaded addon '{0}'!", addonName);
+
+                        // Find any commands by this addon and unload them..
+                        this.RemoveAddonCommands(addonName.ToLower());
+
                         return;
                     }
                 }
@@ -880,7 +892,11 @@ namespace Addons
 
                             addon.InvokeEvent("unload");
                             addon.Release();
+                            
                             e.Player.SendSuccessMessage("[Addons] Unloaded addon '{0}'!", k);
+
+                            // Find any commands by this addon and unload them..
+                            this.RemoveAddonCommands(k.ToLower());
                         }
                         return;
                     }
@@ -898,6 +914,10 @@ namespace Addons
                             return;
 
                         addon.InvokeEvent("unload");
+
+                        // Find any commands by this addon and unload them..
+                        this.RemoveAddonCommands(addonName.ToLower());
+
                         addon.Reload();
                         addon.InvokeEvent("load");
 
@@ -916,6 +936,100 @@ namespace Addons
             // If server, print the list command info..
             if (e.Player.Index == TSPlayer.Server.Index)
                 e.Player.SendErrorMessage("/addon list - Prints the current loaded addons and their states.");
+        }
+
+        /// <summary>
+        /// Registers a command from an addon.
+        /// </summary>
+        /// <param name="addonName"></param>
+        /// <param name="permission"></param>
+        /// <param name="command"></param>
+        public bool RegisterCommand(string addonName, string permission, string command)
+        {
+            lock (this.m_AddonsLock)
+            {
+                // Ensure the arguments are lower-case..
+                addonName = addonName.ToLower();
+                command = command.ToLower();
+
+                // Do not allow multiple addons to own the same command..
+                if (this.m_AddonCommands.Any(a => a.Value.Contains(command)))
+                    return false;
+
+                // Erase any previous registered commands that TShock has with this name..
+                var commands = Commands.ChatCommands.Where(c => c.HasAlias(command)).ToList();
+                if (commands.Count > 0)
+                {
+                    foreach (var cmd in commands)
+                        Commands.ChatCommands.Remove(cmd);
+                }
+
+                // Ensure we have an entry for the given addon..
+                if (!this.m_AddonCommands.ContainsKey(addonName))
+                    this.m_AddonCommands.TryAdd(addonName, new List<string>());
+
+                // Prevent duplicate entries..
+                if (this.m_AddonCommands[addonName].Contains(command))
+                    this.m_AddonCommands[addonName].Remove(command);
+                this.m_AddonCommands[addonName].Add(command);
+
+                // Register the command..
+                Commands.ChatCommands.Add(new Command(permission, HandleAddonCallbackCommand, command));
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Removes an addons commands.
+        /// </summary>
+        /// <param name="addonName"></param>
+        public void RemoveAddonCommands(string addonName)
+        {
+            // Ensure we have any entries for the given addon..
+            if (this.m_AddonCommands[addonName.ToLower()] == null)
+                return;
+
+            // Remove each command from the addon..
+            foreach (var cmd in this.m_AddonCommands[addonName.ToLower()].Select(command => Commands.ChatCommands.SingleOrDefault(c => c.HasAlias(command))).Where(cmd => cmd != null))
+                Commands.ChatCommands.Remove(cmd);
+
+            // Remove the addon entry..
+            List<string> values;
+            this.m_AddonCommands.TryRemove(addonName.ToLower(), out values);
+        }
+
+        /// <summary>
+        /// Handles addon command callbacks to prevent crashes if the addon is unloaded.
+        /// </summary>
+        /// <param name="args"></param>
+        public void HandleAddonCallbackCommand(CommandArgs args)
+        {
+            lock (this.m_AddonsLock)
+            {
+                // Obtain the command from the arguments..
+                var command = args.Message.Split(' ')[0].ToLower();
+
+                // Find the addon with this command..
+                var addonEntry = this.m_AddonCommands.SingleOrDefault(c => c.Value.Contains(command));
+                if (addonEntry.Key == null)
+                    return;
+
+                // Obtain the addon to invoke this command inside of..
+                var addon = this.m_Addons.SingleOrDefault(a => string.Compare(a.Key, addonEntry.Key, StringComparison.InvariantCultureIgnoreCase) == 0);
+                if (addon.Key == null)
+                {
+                    // If no addon was found, remove this command..
+                    var cmd = Commands.ChatCommands.SingleOrDefault(c => c.HasAlias(command));
+                    if (cmd != null)
+                        Commands.ChatCommands.Remove(cmd);
+                    this.m_AddonCommands[addonEntry.Key].Remove(command);
+                    return;
+                }
+
+                // Invoke this command..
+                addon.Value.InvokeCommand(command, args);
+            }
         }
 
         /// <summary>

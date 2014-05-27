@@ -21,6 +21,7 @@ namespace Addons
     using System;
     using System.IO;
     using System.Reflection;
+    using NLua;
     using Terraria;
     using TShockAPI;
 
@@ -32,7 +33,7 @@ namespace Addons
         /// <param name="state"></param>
         /// <returns></returns>
         [System.Runtime.InteropServices.AllowReversePInvokeCalls]
-        private static int lua_AddonNewIndex(LuaState state)
+        private int lua_AddonNewIndex(LuaState state)
         {
             // Ensure we have a string Key..
             if (NLua.LuaLib.LuaType(state, -2) != NLua.LuaTypes.String)
@@ -66,7 +67,7 @@ namespace Addons
         /// <param name="state"></param>
         /// <returns></returns>
         [System.Runtime.InteropServices.AllowReversePInvokeCalls]
-        private static int lua_AddonNewEvent(LuaState state)
+        private int lua_AddonNewEvent(LuaState state)
         {
             // Validate we have two arguments..
             var top = NLua.LuaLib.LuaGetTop(state);
@@ -99,6 +100,67 @@ namespace Addons
             }
 
             // Insert the data into the events table..
+            NLua.LuaLib.LuaInsert(state, -3);
+            NLua.LuaLib.LuaRawSet(state, 1);
+            NLua.LuaLib.LuaPop(state, 1);
+
+            return 0;
+        }
+
+        /// <summary>
+        /// Registers a command callback for this addon.
+        /// </summary>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        [System.Runtime.InteropServices.AllowReversePInvokeCalls]
+        private int lua_AddonNewCommand(LuaState state)
+        {
+            // Validate we have two arguments..
+            var top = NLua.LuaLib.LuaGetTop(state);
+            if (top != 3)
+            {
+                NLua.LuaLib.LuaPop(state, top);
+                NLua.LuaLib.LuaLError(state, "Invalid arguments for commands.register_command!");
+                return 0;
+            }
+
+            // Validate the argument types..
+            if (NLua.LuaLib.LuaType(state, -3) != LuaTypes.String ||
+                NLua.LuaLib.LuaType(state, -2) != LuaTypes.String ||
+                NLua.LuaLib.LuaType(state, -1) != LuaTypes.Function)
+            {
+                NLua.LuaLib.LuaPop(state, top);
+                NLua.LuaLib.LuaLError(state, "Invalid arguments for commands.register_command!");
+                return 0;
+            }
+
+            // Obtain the arguments..
+            var name = NLua.LuaLib.LuaToString(state, -3);
+            var permissions = NLua.LuaLib.LuaToString(state, -2);
+
+            // Ensure the command table exists..
+            NLua.LuaLib.LuaGetGlobal(state, "__addon_commands");
+            if (NLua.LuaLib.LuaType(state, -1) != NLua.LuaTypes.Table)
+            {
+                // Create the missing command table..
+                NLua.LuaLib.LuaPop(state, 1);
+                NLua.LuaLib.LuaNewTable(state);
+                NLua.LuaLib.LuaSetGlobal(state, "__addon_commands");
+                NLua.LuaLib.LuaGetGlobal(state, "__addon_commands");
+            }
+            
+            // Register this command to our plugin..
+            if (!this.Addons.RegisterCommand(this.FileName.ToLower(), permissions, name))
+            {
+                NLua.LuaLib.LuaPop(state, top + 1);
+                NLua.LuaLib.LuaLError(state, string.Format("Failed to register command '{0}'!", name));
+                return 0;
+            }
+
+            // Remove the permission from stack..
+            NLua.LuaLib.LuaRemove(state, -3);
+
+            // Insert the data into the command table..
             NLua.LuaLib.LuaInsert(state, -3);
             NLua.LuaLib.LuaRawSet(state, 1);
             NLua.LuaLib.LuaPop(state, 1);
@@ -141,13 +203,14 @@ namespace Addons
         /// <param name="name"></param>
         /// <param name="game"></param>
         /// <returns></returns>
-        public bool Initialize(string name, Main game)
+        public bool Initialize(string name, Addons addons, Main game)
         {
             // Cleanup previous state..
             if (this.LuaState != null)
                 this.Release();
 
             this.State = AddonState.Loading;
+            this.Addons = addons;
             this.Game = game;
             this.FileName = name;
 
@@ -222,6 +285,13 @@ namespace Addons
                 NLua.LuaLib.LuaRawSet(this.LuaState.GetState(), -3);
                 NLua.LuaLib.LuaSetGlobal(this.LuaState.GetState(), "events");
 
+                // Build the commands table..
+                NLua.LuaLib.LuaNewTable(this.LuaState.GetState());
+                NLua.LuaLib.LuaPushString(this.LuaState.GetState(), "register_command");
+                NLua.LuaLib.LuaPushStdCallCFunction(this.LuaState.GetState(), lua_AddonNewCommand);
+                NLua.LuaLib.LuaRawSet(this.LuaState.GetState(), -3);
+                NLua.LuaLib.LuaSetGlobal(this.LuaState.GetState(), "commands");
+
                 // Set the package.path and package.cpath..
                 this.LuaState["package.path"] = packagePath;
                 this.LuaState["package.cpath"] = packageCPath;
@@ -295,7 +365,7 @@ namespace Addons
         {
             this.State = AddonState.Reloading;
             this.Release();
-            return this.Initialize(this.FileName, this.Game);
+            return this.Initialize(this.FileName, this.Addons, this.Game);
         }
 
         /// <summary>
@@ -335,6 +405,40 @@ namespace Addons
         }
 
         /// <summary>
+        /// Invokes the given command inside this addon.
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="args"></param>
+        public void InvokeCommand(string name, CommandArgs args)
+        {
+            // Ensure the addon state is valid..
+            if (this.State != AddonState.Ok || this.LuaState == null)
+                return;
+
+            try
+            {
+                // Ensure the global __addon_events table exists..
+                if (this.LuaState["__addon_commands"] == null)
+                    return;
+
+                // Attempt to locate the event function..
+                var func = this.LuaState.GetFunction(string.Format("__addon_commands.{0}", name));
+                if (func == null)
+                    return;
+
+                // Attempt to call the function..
+                func.Call(args);
+            }
+            catch (Exception ex)
+            {
+                Log.ConsoleError("[Addon] Addon '{0}' failed to invoke command: {1}.\r\n{2}", this.Name, name, ex.ToString());
+
+                // Set this addon to an error state since we have thrown an exception..
+                this.State = AddonState.Error;
+            }
+        }
+
+        /// <summary>
         /// Gets or sets this addons Lua state.
         /// </summary>
         public NLua.Lua LuaState { get; set; }
@@ -343,12 +447,7 @@ namespace Addons
         /// Gets or sets this addons state.
         /// </summary>
         public AddonState State { get; set; }
-
-        /// <summary>
-        /// Gets or sets this addons game object.
-        /// </summary>
-        public Main Game { get; set; }
-
+        
         /// <summary>
         /// Gets or sets the this addons file name.
         /// </summary>
@@ -373,5 +472,15 @@ namespace Addons
         /// Internal file package object.
         /// </summary>
         private Packages.File FilePackage { get; set; }
+
+        /// <summary>
+        /// Gets or sets the main plugin object.
+        /// </summary>
+        public Addons Addons { get; set; }
+
+        /// <summary>
+        /// Gets or sets this addons game object.
+        /// </summary>
+        public Main Game { get; set; }
     }
 }
