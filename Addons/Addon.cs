@@ -221,7 +221,7 @@ namespace Addons
                 this.LuaState.LoadCLRPackage();
                 this.LuaState.RegisterFunction("print", this, typeof(Addon).GetMethod("lua_Print", BindingFlags.CreateInstance | BindingFlags.IgnoreCase | BindingFlags.Instance | BindingFlags.NonPublic));
                 this.LuaState.RegisterFunction("dump", this, typeof(Addon).GetMethod("lua_ObjectDump", BindingFlags.CreateInstance | BindingFlags.IgnoreCase | BindingFlags.Instance | BindingFlags.NonPublic));
-
+                
                 // Register internal packages..
                 this.FilePackage = new Packages.File();
                 this.FilePackage.RegisterPackage(this.LuaState);
@@ -254,6 +254,10 @@ namespace Addons
                     this.LuaState["TShock.Users"] = TShock.Users;
                     this.LuaState["TShock.Utils"] = TShock.Utils;
                     this.LuaState["TShock.Warps"] = TShock.Warps;
+
+                    // Build NetMessage table..
+                    this.LuaState.NewTable("NetMessage");
+                    this.LuaState.RegisterFunction("NetMessage.SendData", typeof(NetMessage).GetMethod("SendData", BindingFlags.Static | BindingFlags.Public));
                 }
 
                 // Build needed paths..

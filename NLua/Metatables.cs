@@ -253,6 +253,10 @@ namespace NLua
 				} else if (objType.UnderlyingSystemType == typeof(int[])) {
 					int[] arr = ((int[])obj);
 					translator.Push (luaState, arr [intIndex]);
+
+				} else if (objType.UnderlyingSystemType == typeof(byte[])) {
+                    byte[] arr = ((byte[])obj);
+                    translator.Push (luaState, arr [intIndex]);
 				} else {
 					object[] arr = (object[])obj;
 					translator.Push (luaState, arr [intIndex]);
