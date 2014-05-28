@@ -269,6 +269,10 @@ namespace Addons
                     this.LuaState["TShock.Utils"] = TShock.Utils;
                     this.LuaState["TShock.Warps"] = TShock.Warps;
 
+                    // Build Commands table..
+                    this.LuaState.NewTable("Commands");
+                    this.LuaState["Commands.ChatCommands"] = Commands.ChatCommands;
+
                     // Build NetMessage table..
                     this.LuaState.NewTable("NetMessage");
                     this.LuaState.RegisterFunction("NetMessage.SendData", typeof(NetMessage).GetMethod("SendData", BindingFlags.Static | BindingFlags.Public));
@@ -401,6 +405,7 @@ namespace Addons
             catch
             {
                 this.State = AddonState.Error;
+                return false;
             }
         }
 
