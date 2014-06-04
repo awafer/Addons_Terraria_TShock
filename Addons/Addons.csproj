@@ -43,6 +43,7 @@
     <Compile Include="Addon.cs" />
     <Compile Include="Addons.cs" />
     <Compile Include="AddonState.cs" />
+    <Compile Include="Extensions\ByteArrayExtensions.cs" />
     <Compile Include="Extensions\NLuaExtensions.cs" />
     <Compile Include="ObjectInformation.cs" />
     <Compile Include="Packages\File.cs" />

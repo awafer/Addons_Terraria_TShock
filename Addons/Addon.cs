@@ -17,13 +17,13 @@
 
 namespace Addons
 {
-    using System.Runtime.ExceptionServices;
-    using System.Security;
     using KeraLua;
+    using NLua;
     using System;
     using System.IO;
     using System.Reflection;
-    using NLua;
+    using System.Runtime.ExceptionServices;
+    using System.Security;
     using Terraria;
     using TShockAPI;
 

@@ -17,6 +17,7 @@
 
 namespace Addons
 {
+    using Extensions;
     using System;
     using System.Collections.Concurrent;
     using System.Collections.Generic;
@@ -313,7 +314,9 @@ namespace Addons
             {
                 this.m_Addons.ForEach(a =>
                     {
-                        var ret = a.Value.InvokeEvent("NetGetData", args);
+
+                        var data = args.Msg.readBuffer.Take(args.Length + 2).ToArray();
+                        var ret = a.Value.InvokeEvent("NetGetData", args.Msg.whoAmI, (int)args.MsgID, data.Length, data.GetRawString());
                         if (ret != null && ret.Length >= 1)
                         {
                             bool result;
@@ -376,7 +379,9 @@ namespace Addons
             {
                 this.m_Addons.ForEach(a =>
                     {
-                        var ret = a.Value.InvokeEvent("NetSendBytes", args);
+
+                        var data = args.Buffer.Skip(args.Offset).Take(args.Count).ToArray();
+                        var ret = a.Value.InvokeEvent("NetSendBytes", args.Socket.whoAmI, args.Count, data.GetRawString());
                         if (ret != null && ret.Length >= 1)
                         {
                             bool result;
@@ -397,7 +402,7 @@ namespace Addons
             {
                 this.m_Addons.ForEach(a =>
                     {
-                        var ret = a.Value.InvokeEvent("NetSendData", args);
+                        var ret = a.Value.InvokeEvent("NetSendData", args.ignoreClient, (int)args.MsgId, args.number, args.number2, args.number3, args.number4, args.number5, args.remoteClient, args.text);
                         if (ret != null && ret.Length >= 1)
                         {
                             bool result;
@@ -892,7 +897,7 @@ namespace Addons
 
                             addon.InvokeEvent("unload");
                             addon.Release();
-                            
+
                             e.Player.SendSuccessMessage("[Addons] Unloaded addon '{0}'!", k);
 
                             // Find any commands by this addon and unload them..

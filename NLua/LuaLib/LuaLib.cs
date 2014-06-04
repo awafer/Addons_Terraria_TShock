@@ -457,5 +457,10 @@ namespace NLua
 		{
 			LuaCore.LuaNetPopGlobalTable (luaState);
 		}
+
+	    public static void LuaNetPushLString(LuaState luaState, string str, uint size)
+	    {
+	        LuaCore.LuaNetPushLString(luaState, str, size);
+	    }
 	}
 }

@@ -867,7 +867,7 @@ namespace NLua
 				LuaLib.LuaPushNumber (luaState, d);
 			} else if (o is string) {
 				string str = (string)o;
-				LuaLib.LuaPushString (luaState, str);
+			    LuaLib.LuaNetPushLString(luaState, str, (uint)str.Length);
 			} else if (o is bool) {
 				bool b = (bool)o;
 				LuaLib.LuaPushBoolean (luaState, b);
