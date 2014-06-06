@@ -314,7 +314,6 @@ namespace Addons
             {
                 this.m_Addons.ForEach(a =>
                     {
-
                         var data = args.Msg.readBuffer.Take(args.Length + 2).ToArray();
                         var ret = a.Value.InvokeEvent("NetGetData", args.Msg.whoAmI, (int)args.MsgID, data.Length, data.GetRawString());
                         if (ret != null && ret.Length >= 1)
@@ -379,7 +378,6 @@ namespace Addons
             {
                 this.m_Addons.ForEach(a =>
                     {
-
                         var data = args.Buffer.Skip(args.Offset).Take(args.Count).ToArray();
                         var ret = a.Value.InvokeEvent("NetSendBytes", args.Socket.whoAmI, args.Count, data.GetRawString());
                         if (ret != null && ret.Length >= 1)

@@ -20,7 +20,9 @@ namespace Addons
     using KeraLua;
     using NLua;
     using System;
+    using System.Collections.Generic;
     using System.IO;
+    using System.Linq;
     using System.Reflection;
     using System.Runtime.ExceptionServices;
     using System.Security;
@@ -156,7 +158,7 @@ namespace Addons
                 NLua.LuaLib.LuaSetGlobal(state, "__addon_commands");
                 NLua.LuaLib.LuaGetGlobal(state, "__addon_commands");
             }
-            
+
             // Register this command to our plugin..
             if (!this.Addons.RegisterCommand(this.FileName.ToLower(), permissions, name))
             {
@@ -210,9 +212,48 @@ namespace Addons
         }
 
         /// <summary>
+        /// Sends a packet to the given player.
+        /// </summary>
+        /// <param name="player"></param>
+        /// <param name="packet"></param>
+        [HandleProcessCorruptedStateExceptions]
+        [SecurityCritical]
+        [System.Runtime.InteropServices.AllowReversePInvokeCalls]
+        private void lua_SendPacket(int player, LuaTable packet)
+        {
+            // Convert the table to a packet..
+            var data = new List<byte>();
+            packet.Values.Cast<double>().ForEach(b => data.Add((byte)b));
+
+            // Send the packet to the given player. (-1 is server)
+            if (player == -1)
+                TSPlayer.Server.SendRawData(data.ToArray());
+            else
+                TShock.Players[player].SendRawData(data.ToArray());
+        }
+
+        /// <summary>
+        /// Sends a packet to all players on the server.
+        /// </summary>
+        /// <param name="packet"></param>
+        [HandleProcessCorruptedStateExceptions]
+        [SecurityCritical]
+        [System.Runtime.InteropServices.AllowReversePInvokeCalls]
+        private void lua_SendPacketToAll(LuaTable packet)
+        {
+            // Convert the table to a packet..
+            var data = new List<byte>();
+            packet.Values.Cast<double>().ForEach(b => data.Add((byte)b));
+
+            // Send the packet to all players..
+            TSPlayer.All.SendRawData(data.ToArray());
+        }
+
+        /// <summary>
         /// Initializes this addon instance.
         /// </summary>
         /// <param name="name"></param>
+        /// <param name="addons"></param>
         /// <param name="game"></param>
         /// <returns></returns>
         [HandleProcessCorruptedStateExceptions]
@@ -233,9 +274,13 @@ namespace Addons
                 // Create the new Lua state..
                 this.LuaState = new NLua.Lua();
                 this.LuaState.LoadCLRPackage();
+
+                // Register global functions..
                 this.LuaState.RegisterFunction("print", this, typeof(Addon).GetMethod("lua_Print", BindingFlags.CreateInstance | BindingFlags.IgnoreCase | BindingFlags.Instance | BindingFlags.NonPublic));
                 this.LuaState.RegisterFunction("dump", this, typeof(Addon).GetMethod("lua_ObjectDump", BindingFlags.CreateInstance | BindingFlags.IgnoreCase | BindingFlags.Instance | BindingFlags.NonPublic));
-                
+                this.LuaState.RegisterFunction("SendPacket", this, typeof(Addon).GetMethod("lua_SendPacket", BindingFlags.CreateInstance | BindingFlags.IgnoreCase | BindingFlags.Instance | BindingFlags.NonPublic));
+                this.LuaState.RegisterFunction("SendPacketToAll", this, typeof(Addon).GetMethod("lua_SendPacketToAll", BindingFlags.CreateInstance | BindingFlags.IgnoreCase | BindingFlags.Instance | BindingFlags.NonPublic));
+
                 // Register internal packages..
                 this.FilePackage = new Packages.File();
                 this.FilePackage.RegisterPackage(this.LuaState);
@@ -492,7 +537,7 @@ namespace Addons
         /// Gets or sets this addons state.
         /// </summary>
         public AddonState State { get; set; }
-        
+
         /// <summary>
         /// Gets or sets the this addons file name.
         /// </summary>
