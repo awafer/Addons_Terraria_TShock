@@ -47,6 +47,7 @@
     <Compile Include="Extensions\NLuaExtensions.cs" />
     <Compile Include="ObjectInformation.cs" />
     <Compile Include="Packages\File.cs" />
+    <Compile Include="Packages\ObjectHelper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

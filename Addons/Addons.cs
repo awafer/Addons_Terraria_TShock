@@ -22,6 +22,7 @@ namespace Addons
     using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.ComponentModel;
+    using System.IO;
     using System.Linq;
     using System.Reflection;
     using Terraria;
@@ -137,6 +138,22 @@ namespace Addons
             ServerApi.Hooks.WorldMeteorDrop.Register(this, OnWorldMeteorDrop);
             ServerApi.Hooks.WorldSave.Register(this, OnWorldSave);
             ServerApi.Hooks.WorldStartHardMode.Register(this, OnWorldStartHardMode);
+
+            // Auto-load all existing addons..
+            var addonsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Addons");
+            if (Directory.Exists(addonsPath))
+            {
+                var folders = Directory.GetDirectories(addonsPath, "*", SearchOption.TopDirectoryOnly);
+                foreach (var addonName in folders.Select(folder => folder.Split(Path.DirectorySeparatorChar).Last()).Where(addonName => addonName != null).Where(addonName => addonName.ToLower() != "libs" && addonName.ToLower() != "disabled"))
+                {
+                    // Attempt to load the addon..
+                    Addon addon;
+                    if (!this.LoadAddon(addonName, out addon))
+                        TSPlayer.Server.SendErrorMessage("[Addon] Addon '{0}' is already loaded or failed to initialize! Cannot load!", addonName);
+                    else
+                        TSPlayer.Server.SendSuccessMessage("[Addons] Loaded addon '{0}' v{1}, by {2}", addon.Name, addon.Version, addon.Author);
+                }
+            }
         }
 
         /// <summary>
@@ -810,6 +827,31 @@ namespace Addons
         }
 
         /// <summary>
+        /// Loads an addon by its name.
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="addon"></param>
+        /// <returns></returns>
+        private bool LoadAddon(string name, out Addon addon)
+        {
+            lock (this.m_AddonsLock)
+            {
+                this.m_Addons.TryGetValue(name.ToLower(), out addon);
+                if (addon != null)
+                    return false;
+
+                addon = new Addon();
+                if (!addon.Initialize(name, this, m_GameObject))
+                    return false;
+
+                addon.InvokeEvent("load");
+
+                this.m_Addons.TryAdd(name.ToLower(), addon);
+                return true;
+            }
+        }
+
+        /// <summary>
         /// Handles the addon command.
         /// </summary>
         /// <param name="e"></param>
@@ -830,28 +872,14 @@ namespace Addons
                 if (e.Parameters[0].ToLower() == "load" && e.Parameters.Count >= 2)
                 {
                     var addonName = string.Join(" ", e.Parameters.Skip(1).Take(e.Parameters.Count - 1).ToList());
-                    lock (this.m_AddonsLock)
-                    {
-                        Addon addon;
-                        this.m_Addons.TryGetValue(addonName.ToLower(), out addon);
-                        if (addon != null)
-                        {
-                            e.Player.SendErrorMessage("[Addon] Addon '{0}' is already loaded! Cannot load!", addonName);
-                            return;
-                        }
 
-                        addon = new Addon();
-                        if (!addon.Initialize(addonName, this, m_GameObject))
-                            return;
+                    Addon addon;
+                    if (!this.LoadAddon(addonName, out addon))
+                        e.Player.SendErrorMessage("[Addon] Addon '{0}' is already loaded or failed to initialize! Cannot load!", addonName);
+                    else
+                        e.Player.SendSuccessMessage("[Addons] Loaded addon '{0}' v{1}, by {2}", addon.Name, addon.Version, addon.Author);
 
-                        addon.InvokeEvent("load");
-
-                        if (this.m_Addons.TryAdd(addonName.ToLower(), addon))
-                        {
-                            e.Player.SendSuccessMessage("[Addons] Loaded addon '{0}' v{1}, by {2}", addon.Name, addon.Version, addon.Author);
-                        }
-                        return;
-                    }
+                    return;
                 }
 
                 // Handle unload command..

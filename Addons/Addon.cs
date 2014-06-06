@@ -229,7 +229,10 @@ namespace Addons
             if (player == -1)
                 TSPlayer.Server.SendRawData(data.ToArray());
             else
-                TShock.Players[player].SendRawData(data.ToArray());
+            {
+                if (TShock.Players[player] != null)
+                    TShock.Players[player].SendRawData(data.ToArray());
+            }
         }
 
         /// <summary>
@@ -284,6 +287,9 @@ namespace Addons
                 // Register internal packages..
                 this.FilePackage = new Packages.File();
                 this.FilePackage.RegisterPackage(this.LuaState);
+
+                this.ObjectHelperPackage = new Packages.ObjectHelper();
+                this.ObjectHelperPackage.RegisterPackage(this.LuaState);
 
                 //
                 // Object Bindings
@@ -562,6 +568,11 @@ namespace Addons
         /// Internal file package object.
         /// </summary>
         private Packages.File FilePackage { get; set; }
+
+        /// <summary>
+        /// Internal object helper package object.
+        /// </summary>
+        private Packages.ObjectHelper ObjectHelperPackage { get; set; }
 
         /// <summary>
         /// Gets or sets the main plugin object.
