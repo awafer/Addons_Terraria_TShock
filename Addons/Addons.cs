@@ -91,6 +91,9 @@ namespace Addons
         /// </summary>
         public override void Initialize()
         {
+            // Load the configuration..
+            this.Configuration = Configuration.Parse(Path.Combine(TShock.SavePath, "addonscfg.json"));
+
             // Register addon chat command..
             Commands.ChatCommands.Add(new Command("addons.manageaddons", HandleAddonCommand, "addon"));
 
@@ -140,9 +143,12 @@ namespace Addons
             ServerApi.Hooks.WorldStartHardMode.Register(this, OnWorldStartHardMode);
 
             // Auto-load all existing addons..
-            var addonsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Addons");
-            if (Directory.Exists(addonsPath))
+            if (this.Configuration.AutoloadAddons)
             {
+                var addonsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Addons");
+                if (!Directory.Exists(addonsPath))
+                    return;
+
                 var folders = Directory.GetDirectories(addonsPath, "*", SearchOption.TopDirectoryOnly);
                 foreach (var addonName in folders.Select(folder => folder.Split(Path.DirectorySeparatorChar).Last()).Where(addonName => addonName != null).Where(addonName => addonName.ToLower() != "libs" && addonName.ToLower() != "disabled"))
                 {
@@ -204,7 +210,20 @@ namespace Addons
         private void OnGamePostUpdate(EventArgs args)
         {
             lock (this.m_AddonsLock)
+            {
                 this.m_Addons.ForEach(a => a.Value.InvokeEvent("GamePostUpdate", args));
+
+                // Locate any error state addons..
+                if (this.Configuration.AutoReloadAddons)
+                {
+                    var addons = this.m_Addons.Where(a => a.Value.State == AddonState.Error);
+                    addons.ForEach(a =>
+                        {
+                            a.Value.Reload();
+                            a.Value.InvokeEvent("load");
+                        });
+                }
+            }
         }
 
         /// <summary>
@@ -860,6 +879,13 @@ namespace Addons
             // Validate we have proper arguments..
             if (e.Parameters.Count >= 1)
             {
+                // Handle reloadcfg command..
+                if (e.Parameters[0].ToLower() == "reloadcfg")
+                {
+                    this.Configuration = Configuration.Parse(Path.Combine(TShock.SavePath, "addonscfg.json"));
+                    return;
+                }
+
                 // Handle list command..
                 if (e.Parameters[0].ToLower() == "list")
                 {
@@ -963,6 +989,7 @@ namespace Addons
             e.Player.SendErrorMessage("/addon load [name] - Loads the given addon.");
             e.Player.SendErrorMessage("/addon unload [name] - Unloads the given addon.");
             e.Player.SendErrorMessage("/addon reload [name] - Reloads the given addon.");
+            e.Player.SendErrorMessage("/addon reloadcfg - Reloads the Addons configuration file.");
 
             // If server, print the list command info..
             if (e.Player.Index == TSPlayer.Server.Index)
@@ -1097,5 +1124,10 @@ namespace Addons
         {
             get { return Assembly.GetExecutingAssembly().GetName().Version; }
         }
+
+        /// <summary>
+        /// Gets the configuration information of this plugin.
+        /// </summary>
+        public Configuration Configuration { get; set; }
     }
 }

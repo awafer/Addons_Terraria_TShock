@@ -22,6 +22,10 @@
     <OutputPath>bin\x86\Release\ServerPlugins\</OutputPath>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Newtonsoft.Json, Version=4.5.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>bin\x86\Debug\ServerPlugins\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -43,6 +47,7 @@
     <Compile Include="Addon.cs" />
     <Compile Include="Addons.cs" />
     <Compile Include="AddonState.cs" />
+    <Compile Include="Configuration.cs" />
     <Compile Include="Extensions\ByteArrayExtensions.cs" />
     <Compile Include="Extensions\NLuaExtensions.cs" />
     <Compile Include="ObjectInformation.cs" />
