@@ -415,7 +415,8 @@ namespace Addons
                 this.m_Addons.ForEach(a =>
                     {
                         var data = args.Buffer.Skip(args.Offset).Take(args.Count).ToArray();
-                        var ret = a.Value.InvokeEvent("NetSendBytes", args.Socket.whoAmI, args.Count, data.GetRawString());
+                        var msgId = data[2];
+                        var ret = a.Value.InvokeEvent("NetSendBytes", args.Socket.whoAmI, (int)msgId, args.Count, data.GetRawString());
                         if (ret != null && ret.Length >= 1)
                         {
                             bool result;
@@ -436,7 +437,7 @@ namespace Addons
             {
                 this.m_Addons.ForEach(a =>
                     {
-                        var ret = a.Value.InvokeEvent("NetSendData", args.ignoreClient, (int)args.MsgId, args.number, args.number2, args.number3, args.number4, args.number5, args.remoteClient, args.text);
+                        var ret = a.Value.InvokeEvent("NetSendData", args.ignoreClient, args.remoteClient, (int)args.MsgId, args.number, args.number2, args.number3, args.number4, args.number5, args.text);
                         if (ret != null && ret.Length >= 1)
                         {
                             bool result;
